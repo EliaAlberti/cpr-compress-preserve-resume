@@ -3,13 +3,15 @@
   <img src="https://img.shields.io/badge/Model-Opus%204.6-E74C3C?style=for-the-badge" alt="Opus 4.6" />
   <img src="https://img.shields.io/badge/Skills-3%20Included-blue?style=for-the-badge" alt="3 Skills" />
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="MIT License" />
+  <img src="https://img.shields.io/badge/Token%20Savings-~55%25%20median-brightgreen?style=for-the-badge" alt="Token Savings ~55% median" />
 </p>
 
 <h1 align="center">🩺 CPR for Claude Code</h1>
 <h3 align="center"><em>Compress, Preserve & Resume</em></h3>
 
 <p align="center">
-  <strong>Persistent memory across sessions. Never lose context again.</strong>
+  <strong>Persistent memory across sessions. Never lose context again.</strong><br>
+  <em>Estimated ~55% reduction in session-restart token cost (analytical model, range 24-68%).</em>
 </p>
 
 <table>
@@ -39,6 +41,7 @@
 <p align="center">
   <a href="#the-problem">Problem</a> &bull;
   <a href="#the-solution">Solution</a> &bull;
+  <a href="#why-it-saves-tokens">Why It Saves Tokens</a> &bull;
   <a href="#installation">Installation</a> &bull;
   <a href="#usage">Usage</a> &bull;
   <a href="#recommended-workflow">Workflow</a> &bull;
@@ -76,6 +79,24 @@ It gets worse:
 | **New session = blank slate** | Re-explaining your project, re-discovering paths, re-making decisions every time |
 | **Past work is unsearchable** | No way to look up what you discussed three sessions ago |
 | **CLAUDE.md isn't enough** | Static file that doesn't capture the flow of decisions, errors, or solutions |
+
+---
+
+## Why It Saves Tokens
+
+Re-establishing context at the start of every session is expensive. The user re-explains the project, Claude re-reads files, prior decisions get re-derived, and conversations rebuild from scratch. CPR replaces that with a compact log of what mattered.
+
+Across the modelled range, **session-restart token cost drops by 24% in the low case, 55% in the median case, and 68% in the high case**. On a 10-session project that's roughly **~83,250 tokens saved at the median**. On a 20-session, high-context project it's **~535,800 tokens saved**.
+
+| Case | Without CPR | With CPR | Savings | % saved |
+|---|---|---|---|---|
+| Low | 4,850 | 3,700 | 1,150 | **24%** |
+| Median | 16,750 | 7,500 | 9,250 | **55%** |
+| High | 41,200 | 13,000 | 28,200 | **68%** |
+
+These are analytical estimates, not telemetry. CPR is net positive for multi-session projects with cross-session context, and net negative for one-off bug fixes or single-session work. The breakeven is reached when the next session would otherwise repeat ~3,700 tokens of context-rebuild work, which most multi-session projects cross by session #2.
+
+Full methodology, baseline scenarios, and per-component cost breakdown: [`docs/token-savings-analysis.md`](docs/token-savings-analysis.md).
 
 ---
 
