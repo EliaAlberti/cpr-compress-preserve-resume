@@ -32,26 +32,33 @@ Use the AskUserQuestion tool with the following multi-select question:
 
 ### Step 2: Ask for Custom Preservation (Optional)
 
-Ask: "Anything specific you want to highlight or remember? (Type 'skip' to continue)"
+**Contract:** Call AskUserQuestion with exactly 2 options. Do not add an "Other" option manually; the tool adds it automatically. No plain-text prompt is permitted. AskUserQuestion is always the entry point — the free-text path activates only after the tool renders, never instead of it.
 
-This allows the user to add custom notes like:
-- "Remember that the API key expires in 30 days"
-- "The client prefers option B"
-- "Need to revisit the auth flow next week"
+Call AskUserQuestion with:
+- **question:** "Anything specific you want to highlight or remember from this session?"
+- **header:** "Custom note"
+- **multiSelect:** false
+- **options:**
+  1. `{ label: "Skip", description: "No custom notes, continue with session log" }`
+  2. `{ label: "Add a custom note", description: "Provide a custom note to preserve" }`
 
-### Step 3: Suggest Topic Name
+If the user selects "Skip", set custom notes to "None". If the user selects the auto-added free-text path and provides input, treat that input as the user's custom note verbatim.
 
-Analyze the conversation and suggest a concise topic name (3-5 words, lowercase, hyphens):
+### Step 3: Confirm Topic Name
 
-```
-Based on this session, I suggest the topic name: **api-auth-refactor**
+**Contract:** Call AskUserQuestion with exactly 2 options. Do not add an "Other" option manually; the tool adds it automatically. No plain-text prompt is permitted. AskUserQuestion is always the entry point — the free-text path activates only after the tool renders, never instead of it.
 
-Accept this, or type your preferred topic name:
-```
+First, analyse the conversation and derive a concise topic name (3-5 words, lowercase, hyphens) — e.g., `api-auth-refactor`.
 
-The user can:
-- Accept by typing "ok" or "yes"
-- Provide their own topic name
+Then call AskUserQuestion with:
+- **question:** `Topic name for this session log: "{suggested-name}". Confirm or provide a different one?`
+- **header:** "Topic name"
+- **multiSelect:** false
+- **options:**
+  1. `{ label: "Accept: {suggested-name}", description: "Use the suggested topic name" }`
+  2. `{ label: "Provide a different name", description: "Use a custom topic name instead" }`
+
+Substitute `{suggested-name}` with the actual derived name. If the user selects "Accept", use the suggested name as-is. If the user selects the auto-added free-text path and provides input, treat that input as the chosen topic name (normalised to lowercase + hyphens).
 
 ### Step 4: Generate Session Log
 
