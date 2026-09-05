@@ -155,7 +155,15 @@ Across the modelled range, **session-restart token cost drops by 24% in the low 
 | Median | 16,750 | 7,500 | 9,250 | **55%** |
 | High | 41,200 | 13,000 | 28,200 | **68%** |
 
-The `/compress` step itself got cheaper in v1.2.0: the raw conversation archive is now appended by a script, so none of it is model output. Measured across 42 real sessions of 20+ turns, that removes a median of ~4,300 output tokens per `/compress` (upper quartile ~9,900, largest ~640,000).
+v1.2.0 is what makes those numbers hold. The table assumes the raw conversation archive is free, and since v1.2.0 it is: a script appends it from the transcript on disk, so none of it is model output. Before that, Claude re-typed the archive on every `/compress`, a cost the model never counted. Measured across 42 real sessions of 20+ turns, that was a median of ~4,300 output tokens per session (lower quartile ~2,900, upper quartile ~9,900). Add it back and here is what CPR was really delivering before:
+
+| Case | Without CPR | With CPR (before v1.2.0) | % saved | With CPR (v1.2.0) | % saved |
+|---|---|---|---|---|---|
+| Low | 4,850 | 6,600 | net negative | 3,700 | **24%** |
+| Median | 16,750 | 11,800 | 30% | 7,500 | **55%** |
+| High | 41,200 | 22,900 | 44% | 13,000 | **68%** |
+
+So v1.2.0 roughly doubles the real median saving and turns the low case from a loss into a gain.
 
 These are analytical estimates, not telemetry. CPR is net positive for multi-session projects with cross-session context, and net negative for one-off bug fixes or single-session work. The breakeven is reached when the next session would otherwise repeat ~3,700 tokens of context-rebuild work, which most multi-session projects cross by session #2.
 
