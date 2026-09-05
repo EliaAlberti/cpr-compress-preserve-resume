@@ -110,15 +110,19 @@ Create the session log content with this structure:
 
 ---
 
-## Raw Session Log
-
-{FULL CONVERSATION - Copy the entire conversation history here, preserving all user messages and assistant responses. This is the searchable archive.}
 ```
 
 **IMPORTANT:** Only include sections the user selected in Step 1. Always include:
 - Quick Reference (for AI scanning)
 - Quick Resume Context
-- Raw Session Log
+
+**Do NOT write the Raw Session Log yourself.** Write the structured sections above only, save the file (Step 5), then append the raw conversation by script:
+
+```bash
+python3 scripts/dump_transcript.py "{project_root}/CC-Session-Logs/{filename}"
+```
+
+`scripts/` is wherever the script was installed: `~/.claude/scripts/` for a global install, `{project_root}/.claude/scripts/` for a per-project one. The script reads the Claude Code transcript for the current project, picks the most recently modified session (or pass the session id as a second argument), and appends a `## Raw Session Log` section containing every user message and assistant reply. Tool calls, tool results and thinking are skipped. It prints the number of turns written.
 
 ### Step 5: Detect Project Root & Save
 
@@ -145,8 +149,11 @@ Example: `05-03-2026-17_30-api-auth-refactor.md`
 # Create folder if needed
 mkdir -p "{project_root}/CC-Session-Logs/"
 
-# Write session log
+# Write session log (structured sections only)
 Write tool -> {project_root}/CC-Session-Logs/{filename}
+
+# Append the raw conversation
+python3 scripts/dump_transcript.py "{project_root}/CC-Session-Logs/{filename}"
 ```
 
 ### Step 6: Confirm and Instruct
@@ -184,7 +191,8 @@ The session log is saved locally. Use `/resume` to load context from recent sess
 - **Preserve exact values:** Don't paraphrase credentials, IDs, or specific configs
 - **Link context:** If something depends on something else, note the relationship
 - **Extract keywords:** The "Confidence keywords" field is critical for future AI scanning
-- **Full raw log:** The Raw Session Log must contain the COMPLETE conversation for searchability
+- **Full raw log:** The Raw Session Log must contain the COMPLETE conversation for searchability. It is appended by `scripts/dump_transcript.py`, never typed by the model
+- **Zero-cost archive:** The raw log costs zero model output tokens. Spend output on the structured sections only
 
 ---
 

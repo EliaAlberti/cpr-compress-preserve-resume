@@ -73,7 +73,7 @@ Each transition costs `/compress` at the end of the previous session, and `/resu
 
 ### Notes on each component
 
-- **/compress** runs once at end of session: it summarises the conversation, asks the user what to preserve, writes the structured log. Most of the cost is inference (summarisation), not file I/O.
+- **/compress** runs once at end of session: it summarises the conversation, asks the user what to preserve, writes the structured log. Most of the cost is inference (summarisation), not file I/O. The raw conversation archive is appended by `scripts/dump_transcript.py` from the Claude Code transcript on disk, so it costs zero model output tokens. Before v1.2.0 the model re-typed it: measured across 42 real sessions of 20+ turns, that was a median of ~4,300 output tokens per `/compress` (upper quartile ~9,900, largest ~640,000), on top of the figures above.
 - **/preserve** is optional and used less often than `/compress`, usually only when a durable project-level learning emerges. Cost amortised.
 - **/resume** reads `CLAUDE.md` (typically 1,000-3,000 tokens) and 1-3 recent session log summaries (typically 500-1,500 tokens each, of which only the summary section is needed).
 - **Reconciliation** covers any extra tokens needed when log content needs to be reconciled with current code state.
@@ -142,11 +142,12 @@ The cost ranges in this analysis come from the following heuristics:
 
 - **Token-per-word ratio:** ~1.3-1.5 for English prose, used for chat-input estimates.
 - **Token-per-line ratio:** ~5-8 for typical source code, used for file-read estimates.
-- **Inference cost for summarisation:** estimated at 1.5-2× the size of the output, since the model reads the full conversation to produce the summary.
+- **Inference cost for summarisation:** estimated at 1.5-2× the size of the output, since the model reads the full conversation to produce the summary. The raw log is excluded: it is copied from disk by script, not generated.
+- **Raw log size:** measured with `scripts/dump_transcript.py` over 42 local Claude Code sessions of 20+ turns, at ~4 characters per token.
 - **CLAUDE.md and session log size:** based on observed sizes in real CPR-using projects (1,000-3,000 tokens for CLAUDE.md, 500-1,500 tokens per log summary section).
 
 All estimates are stated as Low / Median / High ranges to avoid single-point claims. For your own project, plug in the values that match your context and recompute.
 
 ---
 
-*Last updated alongside CPR v1.1.0. Methodology may evolve as real-world usage data becomes available.*
+*Last updated alongside CPR v1.2.0. Methodology may evolve as real-world usage data becomes available.*

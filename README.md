@@ -155,6 +155,8 @@ Across the modelled range, **session-restart token cost drops by 24% in the low 
 | Median | 16,750 | 7,500 | 9,250 | **55%** |
 | High | 41,200 | 13,000 | 28,200 | **68%** |
 
+The `/compress` step itself got cheaper in v1.2.0: the raw conversation archive is now appended by a script, so none of it is model output. Measured across 42 real sessions of 20+ turns, that removes a median of ~4,300 output tokens per `/compress` (upper quartile ~9,900, largest ~640,000).
+
 These are analytical estimates, not telemetry. CPR is net positive for multi-session projects with cross-session context, and net negative for one-off bug fixes or single-session work. The breakeven is reached when the next session would otherwise repeat ~3,700 tokens of context-rebuild work, which most multi-session projects cross by session #2.
 
 Full methodology, baseline scenarios, and per-component cost breakdown: [`docs/token-savings-analysis.md`](docs/token-savings-analysis.md).
@@ -199,12 +201,14 @@ Every `/compress` creates a structured markdown file in `CC-Session-Logs/` at yo
 
 ---
 ## Raw Session Log
-{Full conversation archive, searchable but never loaded by /resume}
+{Full conversation archive, appended by script, searchable but never loaded by /resume}
 ```
 
 </details>
 
 **The key insight:** `/resume` only reads the summary sections (everything above "Raw Session Log"). The raw conversation is there for searchability, but it never wastes tokens during context loading.
+
+**And it's free to write, too.** The raw log is appended by `scripts/dump_transcript.py`, which reads the Claude Code transcript straight from `~/.claude/projects/`. Claude writes the structured sections only, so `/compress` spends zero output tokens re-typing the conversation.
 
 See [`examples/session-log-example.md`](examples/session-log-example.md) for a complete example.
 
@@ -230,16 +234,20 @@ Skills are `.md` files that go in a `commands/` folder. Pick one:
 **Global install** (available in all projects):
 
 ```bash
-mkdir -p ~/.claude/commands
+mkdir -p ~/.claude/commands ~/.claude/scripts
 cp commands/*.md ~/.claude/commands/
+cp scripts/dump_transcript.py ~/.claude/scripts/
 ```
 
 **Per-project install** (available only in that project):
 
 ```bash
-mkdir -p /path/to/your/project/.claude/commands
+mkdir -p /path/to/your/project/.claude/commands /path/to/your/project/.claude/scripts
 cp commands/*.md /path/to/your/project/.claude/commands/
+cp scripts/dump_transcript.py /path/to/your/project/.claude/scripts/
 ```
+
+`dump_transcript.py` is what `/compress` runs to append the raw conversation to the session log. It needs Python 3.10 or newer, nothing else.
 
 ### 3. Restart Claude Code
 
@@ -458,7 +466,7 @@ Yes. The skills auto-detect your project root and create the `CC-Session-Logs/` 
 <details>
 <summary><strong>How big do logs get?</strong></summary>
 
-A full session log with the raw conversation can be several hundred KB. But `/resume` only reads the summary header (typically 30-80 lines), so token usage stays low regardless of log size.
+A full session log with the raw conversation can be several hundred KB. But the raw part is appended by script, not written by Claude, and `/resume` only reads the summary header (typically 30-80 lines), so token usage stays low regardless of log size.
 
 </details>
 
