@@ -155,7 +155,7 @@ Across the modelled range, **session-restart token cost drops by 24% in the low 
 | Median | 16,750 | 7,500 | 9,250 | **55%** |
 | High | 41,200 | 13,000 | 28,200 | **68%** |
 
-v1.2.0 is what makes those numbers hold. The table assumes the raw conversation archive is free, and since v1.2.0 it is: a script appends it from the transcript on disk, so none of it is model output. Before that, Claude re-typed the archive on every `/compress`, a cost the model never counted. Measured across 42 real sessions of 20+ turns, that was a median of ~4,300 output tokens per session (lower quartile ~2,900, upper quartile ~9,900). Add it back and here is what CPR was really delivering before:
+v1.2.0 is what makes those numbers hold. The table assumes the raw conversation archive is free, and since v1.2.0 it is: a script appends it from the transcript on disk, so none of it is model output. Before that, the archive was re-typed as model output on every `/compress`, a cost the model never counted. Measured across 42 real sessions of 20+ turns, that was a median of ~4,300 output tokens per session (lower quartile ~2,900, upper quartile ~9,900). Add it back and here is what CPR was really delivering before:
 
 | Case | Without CPR | With CPR (before v1.2.0) | % saved | With CPR (v1.2.0) | % saved |
 |---|---|---|---|---|---|
@@ -163,7 +163,7 @@ v1.2.0 is what makes those numbers hold. The table assumes the raw conversation 
 | Median | 16,750 | 11,800 | 30% | 7,500 | **55%** |
 | High | 41,200 | 22,900 | 44% | 13,000 | **68%** |
 
-So v1.2.0 roughly doubles the real median saving and turns the low case from a loss into a gain.
+The net effect: v1.2.0 roughly doubles the real median saving and turns the low case from a loss into a gain.
 
 These are analytical estimates, not telemetry. CPR is net positive for multi-session projects with cross-session context, and net negative for one-off bug fixes or single-session work. The breakeven is reached when the next session would otherwise repeat ~3,700 tokens of context-rebuild work, which most multi-session projects cross by session #2.
 
@@ -216,7 +216,7 @@ Every `/compress` creates a structured markdown file in `CC-Session-Logs/` at yo
 
 **The key insight:** `/resume` only reads the summary sections (everything above "Raw Session Log"). The raw conversation is there for searchability, but it never wastes tokens during context loading.
 
-**And it's free to write, too.** The raw log is appended by `scripts/dump_transcript.py`, which reads the Claude Code transcript straight from `~/.claude/projects/`. Claude writes the structured sections only, so `/compress` spends zero output tokens re-typing the conversation.
+**And it's free to write, too.** The raw log is appended by `scripts/dump_transcript.py`, which reads the Claude Code transcript straight from `~/.claude/projects/`. Only the structured sections are model output, which means `/compress` spends zero output tokens re-typing the conversation.
 
 See [`examples/session-log-example.md`](examples/session-log-example.md) for a complete example.
 
@@ -474,7 +474,7 @@ Yes. The skills auto-detect your project root and create the `CC-Session-Logs/` 
 <details>
 <summary><strong>How big do logs get?</strong></summary>
 
-A full session log with the raw conversation can be several hundred KB. But the raw part is appended by script, not written by Claude, and `/resume` only reads the summary header (typically 30-80 lines), so token usage stays low regardless of log size.
+A full session log with the raw conversation can be several hundred KB. But the raw part is appended by script, not generated as model output, and `/resume` only reads the summary header (typically 30-80 lines), so token usage stays low regardless of log size.
 
 </details>
 
