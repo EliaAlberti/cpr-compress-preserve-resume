@@ -1,0 +1,15 @@
+{
+  "name": "cpr",
+  "description": "CPR: persistent memory for Claude Code. Compress, Preserve & Resume.",
+  "owner": {
+    "name": "Elia Alberti",
+    "url": "https://github.com/EliaAlberti"
+  },
+  "plugins": [
+    {
+      "name": "cpr",
+      "source": "./",
+      "description": "Persistent memory for Claude Code. Save, search, and restore conversation context across sessions."
+    }
+  ]
+}

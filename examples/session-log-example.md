@@ -1,4 +1,4 @@
-# Session Log: 05-03-2026 14:20 - api-auth-refactor
+# Session Log: 2026-03-05 14:20 - api-auth-refactor
 
 ## Quick Reference (for AI scanning)
 **Confidence keywords:** auth, JWT, refresh-tokens, middleware, session-management, Redis, bcrypt, login-flow, rate-limiting, security
@@ -59,4 +59,4 @@ Replaced cookie-based auth with JWT + refresh tokens in my-saas-app. Core flow i
 
 ## Raw Session Log
 
-{Full conversation would appear here, all user messages and assistant responses preserved verbatim for searchability}
+{Appended by scripts/dump_transcript.py: every user message and assistant reply, verbatim, for searchability. Filename for this example: CC-Session-Logs/2026-03-05-14_20-api-auth-refactor.md}

@@ -2,98 +2,60 @@
 """Append the raw conversation transcript to a CPR session log.
 
 Usage:
-    python3 scripts/dump_transcript.py "<session-log-path>" [session-id]
+    python3 dump_transcript.py "<session-log-path>" [session-id]
+    python3 dump_transcript.py "<session-log-path>" --transcript "<path.jsonl>"
 
-Reads the Claude Code transcript for the current project from
-~/.claude/projects/<slug>/<session-id>.jsonl (or the most recently
-modified .jsonl if no session id is given) and appends a
-"## Raw Session Log" section to the given log file. Only user and
-assistant text is kept; thinking, tool calls and tool results are skipped.
+Finds the Claude Code transcript for the current project under
+~/.claude/projects/<slug>/ (the given session id, or else the most recently
+modified one), and appends a "## Raw Session Log" section to the log file.
+Only user and assistant text is kept; thinking, tool calls, tool results and
+subagent side chains are skipped. Prints the number of turns written.
 """
 
-import json
-import os
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
-SKIP_PREFIXES = ("<local-command", "<system-reminder", "<command-name")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from cpr_common import append_raw_log, extract_turns, find_transcript, mirror_file, resolve_paths  # noqa: E402
 
 
-def project_dir() -> Path:
-    slug = os.getcwd().replace("/", "-")
-    return Path.home() / ".claude" / "projects" / slug
+def main(argv: list[str]) -> int:
+    if not argv or argv[0] in ("-h", "--help"):
+        print(__doc__)
+        return 0
 
+    log_path = Path(argv[0]).expanduser()
+    session_id = None
+    transcript = None
+    rest = argv[1:]
+    while rest:
+        arg = rest.pop(0)
+        if arg == "--transcript" and rest:
+            transcript = Path(rest.pop(0)).expanduser()
+        elif not arg.startswith("-"):
+            session_id = arg
 
-def pick_transcript(session_id: str | None) -> Path:
-    folder = project_dir()
-    if not folder.is_dir():
-        sys.exit(f"No Claude Code project folder found at {folder}")
-    if session_id:
-        candidate = folder / f"{session_id}.jsonl"
-        if not candidate.is_file():
-            sys.exit(f"No transcript found for session id {session_id} in {folder}")
-        return candidate
-    files = sorted(folder.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)
-    if not files:
-        sys.exit(f"No .jsonl transcripts found in {folder}")
-    return files[0]
-
-
-def extract_turns(transcript: Path):
-    with transcript.open(encoding="utf-8") as fh:
-        for line in fh:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                obj = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            kind = obj.get("type")
-            if kind not in ("user", "assistant"):
-                continue
-            content = (obj.get("message") or {}).get("content")
-            if kind == "user":
-                if not isinstance(content, str):
-                    continue  # tool results, not a typed message
-                text = content.strip()
-                if not text or text.startswith(SKIP_PREFIXES):
-                    continue
-                yield "User", text
-            else:
-                if not isinstance(content, list):
-                    continue
-                parts = [
-                    b.get("text", "").strip()
-                    for b in content
-                    if isinstance(b, dict) and b.get("type") == "text"
-                ]
-                text = "\n\n".join(p for p in parts if p)
-                if text:
-                    yield "Assistant", text
-
-
-def main() -> None:
-    if len(sys.argv) < 2:
-        sys.exit(__doc__)
-    log_path = Path(sys.argv[1])
-    session_id = sys.argv[2] if len(sys.argv) > 2 else None
     if not log_path.is_file():
-        sys.exit(f"Session log not found: {log_path}")
+        print(f"Session log not found: {log_path}", file=sys.stderr)
+        return 1
 
-    transcript = pick_transcript(session_id)
-    turns = list(extract_turns(transcript))
+    paths = resolve_paths()
+    if transcript is None:
+        transcript = find_transcript(session_id, paths["cwd"], paths["project_root"])
+    if transcript is None or not transcript.is_file():
+        where = " or ".join(str(p) for p in (paths["cwd"], paths["project_root"]))
+        print(f"No transcript found for session {session_id or '(latest)'} under {where}", file=sys.stderr)
+        return 1
 
-    existing = log_path.read_text(encoding="utf-8")
-    with log_path.open("a", encoding="utf-8") as out:
-        if not existing.endswith("\n"):
-            out.write("\n")
-        out.write("\n---\n\n## Raw Session Log\n\n")
-        for role, text in turns:
-            out.write(f"**{role}:**\n{text}\n\n")
-
-    print(f"Appended {len(turns)} turns from {transcript.name} to {log_path}")
+    count = append_raw_log(log_path, extract_turns(transcript))
+    mirrored = mirror_file(log_path, paths["mirrors"])
+    print(f"Appended {count} turns from {transcript.name} to {log_path}")
+    for target in mirrored:
+        print(f"Mirrored to {target}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main(sys.argv[1:]))

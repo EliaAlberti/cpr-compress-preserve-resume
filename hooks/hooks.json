@@ -1,0 +1,29 @@
+{
+  "description": "CPR safety net: save the raw transcript before every compaction, and hand the model a short memory brief when a session starts.",
+  "hooks": {
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/precompact_save.py\"",
+            "timeout": 60,
+            "statusMessage": "CPR: saving raw session log"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/session_start.py\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

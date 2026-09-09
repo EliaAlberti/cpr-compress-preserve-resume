@@ -1,0 +1,14 @@
+{
+  "name": "cpr",
+  "displayName": "CPR: Compress, Preserve & Resume",
+  "version": "2.0.0",
+  "description": "Persistent memory for Claude Code. Save, search, and restore conversation context across sessions.",
+  "author": {
+    "name": "Elia Alberti",
+    "url": "https://github.com/EliaAlberti"
+  },
+  "homepage": "https://github.com/EliaAlberti/cpr-compress-preserve-resume",
+  "repository": "https://github.com/EliaAlberti/cpr-compress-preserve-resume",
+  "license": "MIT",
+  "keywords": ["memory", "context", "session", "compact", "resume", "claude-md"]
+}
