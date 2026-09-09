@@ -1,0 +1,43 @@
+# CPR for Claude Code (Compress, Preserve & Resume)
+
+> A Claude Code plugin that gives sessions memory. Three skills write and load searchable session logs and keep CLAUDE.md current; two hooks save the raw transcript before every compaction and inject a short brief when a session starts. MIT, Python 3.10 standard library only, no build step.
+
+## Is it for you
+
+- Yes, if you work on the same project across several Claude Code sessions and keep re-explaining what happened last time.
+- Yes, if you want the full conversation kept on disk and searchable by topic, not only a compaction summary.
+- No, for one-off fixes or throwaway scripts: there is no next session to pay the save back.
+- It sits next to CLAUDE.md and Claude Code's auto memory; it does not replace them. CLAUDE.md holds instructions, auto memory holds preferences, CPR holds the state of the work.
+
+## What it adds
+
+- `/cpr:compress [quick] [topic]`: writes a structured log (decisions, fixes, files, pending tasks, keywords, a Quick Resume Context) to `CC-Session-Logs/`, then a script appends the raw transcript. Zero model output spent on the archive.
+- `/cpr:preserve [quick]`: folds durable learnings into the project's CLAUDE.md, keeps it under 200 lines, archives stale sections.
+- `/cpr:resume [N] [topic]`: loads the last N log summaries and searches all logs by topic. A script injects the data, so the skill makes no tool calls.
+- PreCompact hook: one autosave log per session, refreshed before every manual or automatic compaction.
+- SessionStart hook: the latest log's Quick Resume Context and pending tasks, about 200 tokens, at startup, after `/clear`, and after compaction.
+
+## Install
+
+- Marketplace: `/plugin marketplace add EliaAlberti/cpr-compress-preserve-resume` then `/plugin install cpr@cpr`.
+- Skills directory: `git clone https://github.com/EliaAlberti/cpr-compress-preserve-resume.git ~/.claude/skills/cpr`, then restart Claude Code.
+- Try without installing: `claude --plugin-dir /path/to/cpr-compress-preserve-resume`.
+- Check: `/cpr:compress` shows a "What to preserve" selector.
+
+## Facts worth knowing
+
+- Modelled savings per session restart: 51% low, 66% median, 74% high. Analytical model, not telemetry. Method and inputs: docs/token-savings-analysis.md.
+- The raw log is measured, not modelled: across 42 real sessions the archive a script now writes for free was a median ~4,300 output tokens.
+- Log filenames are `YYYY-MM-DD-HH_MM-topic.md`; v1 day-first names still load.
+- Optional `~/.claude/cpr.json` routes logs to other folders and mirrors them.
+- The transcript format Claude Code writes is documented as internal; the parser is defensive and the curated summary never depends on it.
+- Tests: `python3 -m unittest discover -s tests`. Manifest: `claude plugin validate .`.
+
+## Links
+
+- README: https://github.com/EliaAlberti/cpr-compress-preserve-resume#readme
+- Token savings analysis: https://github.com/EliaAlberti/cpr-compress-preserve-resume/blob/main/docs/token-savings-analysis.md
+- Example session log: https://github.com/EliaAlberti/cpr-compress-preserve-resume/blob/main/examples/session-log-example.md
+- Releases: https://github.com/EliaAlberti/cpr-compress-preserve-resume/releases
+- Skills source: https://github.com/EliaAlberti/cpr-compress-preserve-resume/tree/main/skills
+- Hooks source: https://github.com/EliaAlberti/cpr-compress-preserve-resume/blob/main/hooks/hooks.json

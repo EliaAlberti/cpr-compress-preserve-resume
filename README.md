@@ -39,6 +39,7 @@
 </p>
 
 <p align="center">
+  <a href="#is-cpr-for-me">Is it for me?</a> &bull;
   <a href="#the-problem">Problem</a> &bull;
   <a href="#the-solution">Solution</a> &bull;
   <a href="#why-it-saves-tokens">Why It Saves Tokens</a> &bull;
@@ -64,6 +65,16 @@ CPR is a **Claude Code plugin**. It adds three slash commands and two hooks:
 | **SessionStart hook** | Hands the model a short memory brief when a session starts or compacts. |
 
 No build step, no dependencies beyond Python 3.10, and every file is plain markdown or a small script you can read.
+
+---
+
+## Is CPR For Me?
+
+**Yes** if you work on the same project across several Claude Code sessions and find yourself re-explaining what happened last time, or if you want the full conversation kept on disk and searchable by topic rather than flattened into a compaction summary.
+
+**No** if your sessions are one-off fixes or throwaway scripts. There is no next session to pay the save back.
+
+CPR sits next to CLAUDE.md and Claude Code's auto memory rather than replacing them. CLAUDE.md holds instructions, auto memory holds preferences, CPR holds the state of the work. Install takes one line, and removing it is `/plugin uninstall cpr@cpr`.
 
 ---
 
@@ -191,7 +202,7 @@ See [`examples/session-log-example.md`](examples/session-log-example.md) for a c
 
 ### Prerequisites
 
-- [Claude Code](https://code.claude.com/docs) v2.1.200 or newer
+- [Claude Code](https://code.claude.com/docs) with plugin support. Verified on v2.1.266.
 - Python 3.10 or newer on your PATH as `python3`
 
 ### Option A: plugin marketplace (recommended)
@@ -210,7 +221,7 @@ claude plugin marketplace add EliaAlberti/cpr-compress-preserve-resume
 claude plugin install cpr@cpr
 ```
 
-Updates arrive when the plugin version is bumped. Run `/plugin` to see or update it.
+The install wires the skills and both hooks. Run `/reload-plugins` or restart Claude Code if you installed from inside a session. Updates arrive when the plugin version is bumped; `/plugin` shows what is installed and lets you update or uninstall.
 
 ### Option B: skills directory
 
@@ -220,7 +231,7 @@ Clone the repo into your personal skills folder and Claude Code loads it as a pl
 git clone https://github.com/EliaAlberti/cpr-compress-preserve-resume.git ~/.claude/skills/cpr
 ```
 
-`git pull` in that folder updates it.
+`git pull` in that folder updates it. Edits to a `SKILL.md` apply immediately; changes to the hooks need `/reload-plugins` or a restart. If you prefer to keep a development clone elsewhere, a symlink at `~/.claude/skills/cpr` pointing at it works the same way.
 
 ### Option C: try it without installing
 
@@ -228,13 +239,17 @@ git clone https://github.com/EliaAlberti/cpr-compress-preserve-resume.git ~/.cla
 claude --plugin-dir /path/to/cpr-compress-preserve-resume
 ```
 
+The skills and hooks are active for that session only. Pass the flag again next time.
+
 ### Check it works
 
 ```
 You: /cpr:compress
 ```
 
-If the "What to preserve" selector appears, it's working. The hooks are active whenever the plugin is enabled.
+If the "What to preserve" selector appears, it's working. The hooks are active whenever the plugin is enabled: the next time you start a session in a project that already has logs, the memory brief is there before your first message.
+
+One detail: the skills are user-invoked only, so they don't appear when you ask the model to list its skills. Type them.
 
 ### Model
 
@@ -487,6 +502,8 @@ The skills look for CLAUDE.md at the project root. If you have multiple CLAUDE.m
 ---
 
 ## Development
+
+`llms.txt` at the repo root is the AI-readable summary of the project. Keep it in step with this README.
 
 ```bash
 python3 -m unittest discover -s tests -v   # script tests
